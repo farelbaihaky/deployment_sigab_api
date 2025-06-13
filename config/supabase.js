@@ -1,0 +1,22 @@
+const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
+
+// Initialize Supabase client
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Supabase URL and service key must be provided in environment variables');
+  process.exit(1);
+}
+
+console.log('Initializing Supabase with URL:', supabaseUrl);
+
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
+
+module.exports = supabase; 
