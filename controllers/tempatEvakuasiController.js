@@ -84,13 +84,29 @@ exports.updateTempatEvakuasi = async (req, res) => {
   const foto = req.file?.publicUrl;
 
   try {
+    // Debug log untuk melihat data yang diterima
+    console.log('Update request data:', {
+      id,
+      nama_tempat,
+      link_gmaps,
+      foto,
+      file: req.file
+    });
+
     const check = await pool.query(`SELECT foto FROM sigab_app.tempat_evakuasi WHERE id_evakuasi = $1`, [id]);
     if (check.rowCount === 0) {
       return res.status(404).json({ success: false, message: 'Tempat evakuasi tidak ditemukan' });
     }
     const oldFoto = check.rows[0].foto;
 
-    const finalFoto = foto !== null ? foto : oldFoto;
+    // Debug log untuk melihat foto lama
+    console.log('Old foto from database:', oldFoto);
+
+    // Hanya update foto jika ada file baru yang diupload dan valid
+    const finalFoto = (foto && foto !== '()') ? foto : oldFoto;
+
+    // Debug log untuk melihat foto yang akan disimpan
+    console.log('Final foto to be saved:', finalFoto);
 
     const result = await pool.query(
       `UPDATE sigab_app.tempat_evakuasi
@@ -106,6 +122,9 @@ exports.updateTempatEvakuasi = async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Tempat evakuasi tidak ditemukan' });
     }
+
+    // Debug log untuk melihat hasil update
+    console.log('Update result:', result.rows[0]);
 
     res.json({ success: true, message: 'Data berhasil diupdate', data: result.rows[0] });
   } catch (err) {

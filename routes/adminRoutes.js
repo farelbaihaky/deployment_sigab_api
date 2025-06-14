@@ -22,7 +22,7 @@ router.post('/logout', adminController.logoutAdmin);
 
 // LAPORAN BANJIR //
 // CREATE //
-router.post('/laporan/banjir/create', upload.single('foto'), uploadToSupabase, laporanBanjirController.createLaporanBanjir);
+router.post('/laporan/banjir/create', auth, upload.single('foto'), uploadToSupabase, laporanBanjirController.createLaporanBanjir);
 // READ ALL//
 router.get('/laporan/banjir', laporanBanjirController.getAllLaporanBanjir);
 // READ BY VALID //
@@ -36,7 +36,7 @@ router.get('/laporan/banjir/:id', laporanBanjirController.getLaporanBanjirById);
 
 
 // PATCH //
-router.patch('/laporan/banjir/verifikasi/:id', verifikasiLaporanBanjir);
+router.patch('/laporan/banjir/verifikasi/:id', auth, verifikasiLaporanBanjir);
 
 // LAPORAN INFRASTRUKTUR //
 
@@ -53,17 +53,17 @@ router.get('/informasi_banjir', informasiBanjirController.getAllInformasiBanjir)
 // READ BY ID
 router.get('/informasi_banjir/:id', informasiBanjirController.getInformasiBanjirById);
 // UPDATE
-router.put('/informasi_banjir/update/:id', informasiBanjirController.updateInformasiBanjir);
+router.put('/informasi_banjir/update/:id', auth, informasiBanjirController.updateInformasiBanjir);
 // DELETE
-router.delete('/informasi_banjir/delete/:id', informasiBanjirController.deleteInformasiBanjir);
+router.delete('/informasi_banjir/delete/:id', auth, informasiBanjirController.deleteInformasiBanjir);
 
 // TIPS MITIGASI BENCANA //
 // CREATE //
 router.post('/tips_mitigasi_bencana/create', auth, upload.single('media'), uploadToSupabase, tipsController.createTipsMitigasi);
 // READ ALL//
-router.get('/tips_mitigasi_bencana', auth, tipsController.getAllTipsMitigasi);
+router.get('/tips_mitigasi_bencana', tipsController.getAllTipsMitigasi);
 // READ BY ID//
-router.get('/tips_mitigasi_bencana/:id', auth, tipsController.getTipsMitigasiById);
+router.get('/tips_mitigasi_bencana/:id', tipsController.getTipsMitigasiById);
 // update //
 router.put('/tips_mitigasi_bencana/update/:id', auth, upload.single('media'), uploadToSupabase, tipsController.updateTipsMitigasi);
 // DELETE //
@@ -74,9 +74,9 @@ module.exports = router;
 // CREATE //
 router.post('/tempat_evakuasi/create', auth, upload.single('foto'), uploadToSupabase, tempatEvakuasiController.createTempatEvakuasi);
 // READ ALL //
-router.get('/tempat_evakuasi', auth, tempatEvakuasiController.getAllTempatEvakuasi);
+router.get('/tempat_evakuasi', tempatEvakuasiController.getAllTempatEvakuasi);
 // READ BY ID //
-router.get('/tempat_evakuasi/:id', auth, tempatEvakuasiController.getTempatEvakuasiById);
+router.get('/tempat_evakuasi/:id', tempatEvakuasiController.getTempatEvakuasiById);
 // UPDATE //
 router.put('/tempat_evakuasi/update/:id', auth, upload.single('foto'), uploadToSupabase, tempatEvakuasiController.updateTempatEvakuasi);
 // DELETE //
