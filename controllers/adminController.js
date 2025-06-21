@@ -15,14 +15,13 @@ exports.loginAdmin = async (req, res) => {
       // Log login gagal
       await pool.query(
         `INSERT INTO sigab_app.logs_activity_admin 
-          (id_admin, action, method, endpoint, ip_address, device_info)
-         VALUES (NULL, $1, $2, $3, $4, $5)`,
+          (id_admin, action, method, endpoint, ip_address)
+         VALUES (NULL, $1, $2, $3, $4`,
         [
           'Login gagal (username/password salah)',
           req.method,
           req.originalUrl,
           req.ip || req.connection.remoteAddress,
-          req.headers['user-agent']
         ]
       );
 
@@ -41,7 +40,6 @@ exports.loginAdmin = async (req, res) => {
     const createdAt = new Date();
     const expiredAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // +7 hari
     const ipAddress = req.ip || req.connection.remoteAddress;
-    const deviceInfo = req.headers['user-agent'];
     const status = 'active';
 
     // Cek apakah token untuk admin sudah ada
@@ -54,32 +52,31 @@ exports.loginAdmin = async (req, res) => {
       // update token lama
       await pool.query(
         `UPDATE sigab_app.token_admin 
-         SET token = $1, created_at = $2, expired_at = $3, ip_address = $4, device_info = $5, status = $6 
-         WHERE id_admin = $7`,
-        [token, createdAt, expiredAt, ipAddress, deviceInfo, status, admin.id_admin]
+         SET token = $1, created_at = $2, expired_at = $3, ip_address = $4, status = $5
+         WHERE id_admin = $6`,
+        [token, createdAt, expiredAt, ipAddress, status, admin.id_admin]
       );
     } else {
       // insert token baru
       await pool.query(
         `INSERT INTO sigab_app.token_admin 
-         (id_admin, token, created_at, expired_at, ip_address, device_info, status)
+         (id_admin, token, created_at, expired_at, ip_address, status)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [admin.id_admin, token, createdAt, expiredAt, ipAddress, deviceInfo, status]
+        [admin.id_admin, token, createdAt, expiredAt, ipAddress, status]
       );
     }
 
     // Log aktivitas login
     await pool.query(
       `INSERT INTO sigab_app.logs_activity_admin 
-        (id_admin, action, method, endpoint, ip_address, device_info)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
+        (id_admin, action, method, endpoint, ip_address)
+       VALUES ($1, $2, $3, $4, $5)`,
       [
         admin.id_admin,
         'Login admin',
         req.method,
         req.originalUrl,
         ipAddress,
-        deviceInfo
       ]
     );
 
@@ -123,8 +120,8 @@ exports.logoutAdmin = async (req, res) => {
     // Log aktivitas logout
     await pool.query(
       `INSERT INTO sigab_app.logs_activity_admin 
-        (id_admin, action, method, endpoint, ip_address, device_info)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
+        (id_admin, action, method, endpoint, ip_address)
+       VALUES ($1, $2, $3, $4, $5)`,
       [
         id_admin,
         'Logout admin',
