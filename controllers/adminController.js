@@ -61,7 +61,7 @@ exports.loginAdmin = async (req, res) => {
       await pool.query(
         `INSERT INTO sigab_app.token_admin 
          (id_admin, token, created_at, expired_at, ip_address, status)
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+         VALUES ($1, $2, $3, $4, $5, $6)`,
         [admin.id_admin, token, createdAt, expiredAt, ipAddress, status]
       );
     }
