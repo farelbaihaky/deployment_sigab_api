@@ -4,15 +4,20 @@ const pool = require('../config/db');
 
 // Middleware untuk memverifikasi token admin + log aktivitas
 const verifyAdmin = async (req, res, next) => {
+  console.log('🔍 DEBUG: Middleware auth.js called for endpoint:', req.originalUrl);
+  console.log('🔍 DEBUG: Method:', req.method);
+  
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Format: Bearer <token>
 
   if (!token) {
+    console.log('❌ DEBUG: No token found');
     return res.status(401).json({ success: false, message: 'Token tidak tersedia' });
   }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('🔍 DEBUG: Token verified, admin ID:', decoded.id);
 
     const result = await pool.query(
       `SELECT * FROM sigab_app.token_admin 
@@ -21,6 +26,7 @@ const verifyAdmin = async (req, res, next) => {
     );
 
     if (result.rows.length === 0) {
+      console.log('❌ DEBUG: Token not found in database or not active');
       return res.status(401).json({ success: false, message: 'Token tidak valid, tidak aktif, atau tidak ditemukan' });
     }
 
@@ -29,8 +35,11 @@ const verifyAdmin = async (req, res, next) => {
     const expiredAt = new Date(tokenData.expired_at);
 
     if (expiredAt < now) {
+      console.log('❌ DEBUG: Token expired');
       return res.status(401).json({ success: false, message: 'Token telah kedaluwarsa (expired)' });
     }
+
+    console.log('✅ DEBUG: Token valid, proceeding with logging setup');
 
     // ✅ Logging aktivitas ke logs_activity_admin
     const id_admin = decoded.id;
@@ -94,11 +103,19 @@ const verifyAdmin = async (req, res, next) => {
 
     // Override res.json to capture the response data
     res.json = async function(data) {
+      console.log('🔍 DEBUG: res.json called with data:', JSON.stringify(data, null, 2));
+      console.log('🔍 DEBUG: method:', method);
+      console.log('🔍 DEBUG: endpoint:', endpoint);
+      console.log('🔍 DEBUG: action:', action);
+      console.log('🔍 DEBUG: id_admin:', id_admin);
+      
       // If this is a create request and we have data
       if (method === 'POST' && endpoint.includes('/create') && data && data.data) {
         const newId = data.data.id || data.data.id_info_banjir || data.data.id_tips || data.data.id_evakuasi || data.data.id_laporan;
+        console.log('🔍 DEBUG: newId found:', newId);
         if (newId) {
           action = `Menambahkan data ${resource} dengan ID: ${newId}`;
+          console.log('🔍 DEBUG: Updated action:', action);
         }
       }
 
@@ -175,15 +192,25 @@ const verifyAdmin = async (req, res, next) => {
       }
 
       // Insert log before sending response
+      console.log('🔍 DEBUG: Attempting to insert log with:', {
+        id_admin,
+        action,
+        method,
+        endpoint,
+        ip_address,
+        device_info
+      });
+      
       try {
-        await pool.query(
+        const logResult = await pool.query(
           `INSERT INTO sigab_app.logs_activity_admin 
             (id_admin, action, method, endpoint, ip_address, device_info)
            VALUES ($1, $2, $3, $4, $5, $6)`,
           [id_admin, action, method, endpoint, ip_address, device_info]
         );
+        console.log('✅ DEBUG: Log inserted successfully:', logResult);
       } catch (error) {
-        console.error('Error inserting log:', error);
+        console.error('❌ DEBUG: Error inserting log:', error);
       }
       
       // Call the original res.json
