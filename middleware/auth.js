@@ -59,7 +59,6 @@ const verifyAdmin = async (req, res, next) => {
 
     // Define variables before res.json override
     const ip_address = req.ip || req.connection.remoteAddress;
-    const device_info = req.headers['user-agent'];
 
     // Determine action berdasarkan method dan endpoint
     switch (method) {
@@ -197,16 +196,15 @@ const verifyAdmin = async (req, res, next) => {
         action,
         method,
         endpoint,
-        ip_address,
-        device_info
+        ip_address
       });
       
       try {
         const logResult = await pool.query(
           `INSERT INTO sigab_app.logs_activity_admin 
-            (id_admin, action, method, endpoint, ip_address, device_info)
-           VALUES ($1, $2, $3, $4, $5, $6)`,
-          [id_admin, action, method, endpoint, ip_address, device_info]
+            (id_admin, action, method, endpoint, ip_address)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [id_admin, action, method, endpoint, ip_address]
         );
         console.log('✅ DEBUG: Log inserted successfully:', logResult);
       } catch (error) {
