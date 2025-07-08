@@ -117,7 +117,7 @@ exports.logoutAdmin = async (req, res) => {
       [id_admin]
     );
 
-    // Log aktivitas logout
+    // Log aktivitas logout berhasil
     await pool.query(
       `INSERT INTO sigab_app.logs_activity_admin 
         (id_admin, action, method, endpoint, ip_address)
@@ -127,14 +127,31 @@ exports.logoutAdmin = async (req, res) => {
         'Logout admin',
         req.method,
         req.originalUrl,
-        req.ip || req.connection.remoteAddress,
-        req.headers['user-agent']
+        req.ip || req.connection.remoteAddress
       ]
     );
 
     res.json({ success: true, message: 'Logout berhasil' });
   } catch (err) {
     console.error('❌ Logout error:', err);
+    
+    // Log logout gagal (pindahkan ke sini agar tetap tercatat)
+    try {
+      await pool.query(
+        `INSERT INTO sigab_app.logs_activity_admin 
+          (id_admin, action, method, endpoint, ip_address)
+         VALUES (NULL, $1, $2, $3, $4)`,
+        [
+          'Logout gagal (token invalid/expired)',
+          req.method,
+          req.originalUrl,
+          req.ip || req.connection.remoteAddress
+        ]
+      );
+    } catch (logError) {
+      console.error('Error logging failed logout:', logError);
+    }
+    
     res.status(401).json({ success: false, message: 'Token tidak valid atau sudah kadaluarsa' });
   }
 };
