@@ -48,6 +48,47 @@ const verifyAdmin = async (req, res, next) => {
     const idMatch = endpoint.match(/\/([^\/]+)\/([^\/]+)$/);
     const id = idMatch ? idMatch[2] : null;
 
+    // Define variables before res.json override
+    const ip_address = req.ip || req.connection.remoteAddress;
+    const device_info = req.headers['user-agent'];
+
+    // Determine action berdasarkan method dan endpoint
+    switch (method) {
+      case 'POST':
+        if (endpoint.includes('/create')) {
+          // Default action if we don't get the ID from response
+          action = `Menambahkan data ${resource}`;
+        } else if (endpoint.includes('/login')) {
+          action = 'Login ke sistem';
+        } else if (endpoint.includes('/logout')) {
+          action = 'Logout dari sistem';
+        } else {
+          action = `Membuat data ${resource}`;
+        }
+        break;
+      case 'PUT':
+      case 'PATCH':
+        if (endpoint.includes('/update')) {
+          // Default action for update
+          action = `Mengubah data ${resource} ID: ${id}`;
+        } else if (endpoint.includes('/verifikasi')) {
+          const status = req.body.status || 'tidak diketahui';
+          action = `Memverifikasi ${resource} ID: ${id} menjadi ${status}`;
+        } else {
+          action = `Memperbarui data ${resource} ID: ${id}`;
+        }
+        break;
+      case 'DELETE':
+        if (endpoint.includes('/delete')) {
+          action = `Menghapus data ${resource} dengan ID: ${id}`;
+        } else {
+          action = `Menghapus ${resource} ID: ${id}`;
+        }
+        break;
+      default:
+        action = `Akses endpoint ${endpoint}`;
+    }
+
     // Store the original res.json function
     const originalJson = res.json;
 
@@ -55,7 +96,7 @@ const verifyAdmin = async (req, res, next) => {
     res.json = async function(data) {
       // If this is a create request and we have data
       if (method === 'POST' && endpoint.includes('/create') && data && data.data) {
-        const newId = data.data.id || data.data.id_info_banjir || data.data.id_tips || data.data.id_evakuasi;
+        const newId = data.data.id || data.data.id_info_banjir || data.data.id_tips || data.data.id_evakuasi || data.data.id_laporan;
         if (newId) {
           action = `Menambahkan data ${resource} dengan ID: ${newId}`;
         }
@@ -148,45 +189,6 @@ const verifyAdmin = async (req, res, next) => {
       // Call the original res.json
       return originalJson.call(this, data);
     };
-
-    switch (method) {
-      case 'POST':
-        if (endpoint.includes('/create')) {
-          // Default action if we don't get the ID from response
-          action = `Menambahkan data ${resource}`;
-        } else if (endpoint.includes('/login')) {
-          action = 'Login ke sistem';
-        } else if (endpoint.includes('/logout')) {
-          action = 'Logout dari sistem';
-        } else {
-          action = `Membuat data ${resource}`;
-        }
-        break;
-      case 'PUT':
-      case 'PATCH':
-        if (endpoint.includes('/update')) {
-          // Default action for update
-          action = `Mengubah data ${resource} ID: ${id}`;
-        } else if (endpoint.includes('/verifikasi')) {
-          const status = req.body.status || 'tidak diketahui';
-          action = `Memverifikasi ${resource} ID: ${id} menjadi ${status}`;
-        } else {
-          action = `Memperbarui data ${resource} ID: ${id}`;
-        }
-        break;
-      case 'DELETE':
-        if (endpoint.includes('/delete')) {
-          action = `Menghapus data ${resource} dengan ID: ${id}`;
-        } else {
-          action = `Menghapus ${resource} ID: ${id}`;
-        }
-        break;
-      default:
-        action = `Akses endpoint ${endpoint}`;
-    }
-
-    const ip_address = req.ip || req.connection.remoteAddress;
-    const device_info = req.headers['user-agent'];
 
     // Kirim data admin ke controller
     req.admin = decoded;
